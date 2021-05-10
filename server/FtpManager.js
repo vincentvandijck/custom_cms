@@ -11,38 +11,25 @@ function ftpManager() {
     this.connected = false;
 
     this.getFtpConfig = async () => {
-        console.log("GET THAT FTP CONFIG JO!!!!", `file://${__dirname}/ftp.config    `);
         try {
             const ftp_config = await fsp.readFile(`server/ftp.config`, "utf8");
             this.config = JSON.parse(ftp_config);
+            return this.config;
         } catch (err) {
-            console.log('ERRRRRRRR: ', err);
+            console.error('ERRRRRRRR: ', err);
             return false;
         }
     }
 
     this.testFtpConfig = async (config) => {
-        console.log('test config', config);
-
         try {
-            console.log('test yes?');
-
             await this.ftp.connect(config.login);
-            console.log('test worked');
             this.config = config;
-            try {
-                this.ftp.end();
-            } catch (err) {
-                console.error(err);
-            }
+            this.ftp.end();
+
             return true;
         } catch (err) {
             console.error(err);
-            try {
-                this.ftp.end();
-            } catch (err) {
-                console.error(err);
-            }
             return false;
         }
     }
@@ -79,29 +66,18 @@ function ftpManager() {
 
         fsp.writeFile(progress_path, JSON.stringify(data))
             .then(() => { })
-            .catch((err) => { console.log('write err', err) });
+            .catch((err) => { console.error('write err', err) });
     }
 
     this.processQueue = async () => {
-        // console.log(this.queue.length, this.connected);
-        let c = false;
-        try { c = await this.ftp.connect(this.config.login) }
-        catch (err) {
-            console.log('SERVER ERRRRRRRIRRRRRRRRR!!!!', err);
-        };
-        // console.log('connection ', c);
         let a = this.queue.shift();
-        // console.log(a.action.type, a.action.remote);
+
         try {
+            await this.ftp.connect(this.config.login);
             await this.processAction(a.action);
-            try {
-                this.ftp.end();
-            } catch (err) {
-                console.error(err);
-            }
-        } catch (e) {
-            console.log("ERRR", e);
+            this.ftp.end();
         }
+        catch (err) { console.error(err) };
         a.resolve();
 
         if (this.queue.length !== 0)

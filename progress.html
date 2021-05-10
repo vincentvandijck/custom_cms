@@ -48,7 +48,6 @@
 <script>
 
     require('electron').ipcRenderer.on('progress', (event, message) => {
-        console.log(message) // Prints 'whoooooooh!'
         document.querySelector('.background').style.width = `${message}%`;
     });
 

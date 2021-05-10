@@ -77,23 +77,32 @@
     </div>
     <form id='manual-form' action="" class='hidden'>
         ftp login<br><br>
-        <label for="host">host</label><input id='host' type='text'>
-        <label for="username">username</label><input id='username' type='text'>
-        <label for="password">password</label><input id='password' type='text'><br><br>
-        <label for="url">url www</label><input id='url' type='text'><br>
-        <label for="root">public directory</label><input id='root' type='text'><br><br>
+        <label for="host">host</label><input id='host' type='text' spellcheck="false">
+        <label for="username">username</label><input id='username' type='text' spellcheck="false">
+        <label for="password">password</label><input id='password' type='text' spellcheck="false"><br><br>
+        <label for="url">url www</label><input id='url' type='text' spellcheck="false"><br>
+        <label for="root">public directory</label><input id='root' type='text' spellcheck="false"><br><br>
         <button id='manual-submit' type='button'>enter</button>
     </form>
 </body>
 <script>
     const { ipcRenderer } = require('electron');
+    ipcRenderer.on('ping', () => { console.log('PING!') });
+    ipcRenderer.on('existing-config', (event, config) => {
+        console.log('existing config ', config);
+        document.querySelector('#host').value = config.login.host;
+        document.querySelector('#username').value = config.login.username;
+        document.querySelector('#password').value = config.login.password;
+        document.querySelector('#url').value = config.path.url;
+        document.querySelector('#root').value = config.path.root;
+
+    });
+
 
     function testFtpConfig(ftpConfig) {
-        console.log('test fpt config')
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
-                console.log(this.response);
                 if (JSON.parse(this.response)) {
                     ipcRenderer.send('config-finished', true);
                 } else {
@@ -106,18 +115,14 @@
         xhr.send(ftpConfig);
     }
 
-    window.addEventListener('dragover', allowDrop);
+    document.body.addEventListener('dragover', allowDrop);
     document.body.addEventListener('drop', drop);
 
 
     function allowDrop(e) {
-        console.log('this happens!!!');
         e.preventDefault();
-        // return false
     };
     function drop(e) {
-        console.log('this happens!!!');
-
         var file = e.dataTransfer.files[0],
             reader = new FileReader();
         reader.onload = function (event) {
@@ -136,7 +141,7 @@
                 if (keys.filter(v => !(v in ftpConfig.path)).length != 0) throw 'JSON-parseable file, but details missing';
                 testFtpConfig(result);
             } catch (e) {
-                console.log(e);
+                console.error(e);
                 document.querySelector('#error-text').innerHTML = 'incorrect file';
                 document.querySelector('#error').classList.remove('hidden');
                 setTimeout(() => {
@@ -169,9 +174,6 @@
                 root: form.querySelector('#root').value,
             }
         }
-
-        console.log(config);
-
         testFtpConfig(config);
     })
 

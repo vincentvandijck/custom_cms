@@ -33,71 +33,62 @@ const getNewDim = (dim, format) => {
     }
 }
 
-const optimizeImage = async (_src, _path, _dim, _format) => {
-    let newDim = getNewDim(_dim, _format);
-    let local_path = `${__dirname}/temp/${_format}/${_src}`;
-    await sharp(_path).resize({ width: newDim.x, height: newDim.y, fit: sharp.fit.fill }).toFile(local_path);
+const optimizeImage = async ({ src, path, newDim, format }) => {
+    let local_path = `${__dirname}/temp/${format}/${src}`;
+    await sharp(path).resize({ width: newDim.x, height: newDim.y, fit: sharp.fit.fill }).toFile(local_path);
     return delay(500);
 }
 
-const optimizeVideo = (_src, _path, _dim, _format) => {
-    console.log("OPTIMIIIIIZE");
-    let basename = path.parse(_src).name;
-    let newDim = getNewDim(_dim, _format);
-
-    let dist_path = `${__dirname}/temp/${_format}/${_src}`;
+const optimizeVideo = ({ src, path, newDim, format }) => {
+    let basename = path.parse(src).name;
+    let local_path = `${__dirname}/temp/${format}/${src}`;
     let progress_path = `${__dirname}/progress/${basename}.txt`;
 
     const args = [
-        '-i', _path,
+        '-i', path,
         '-vf', `scale=${newDim.x}:${newDim.y}`,
         '-codec:a', 'libmp3lame',
         '-c:v', 'libx264',
         '-movflags', '+faststart',
-        dist_path,
+        local_path,
         `-progress`, progress_path,
     ]
-    console.log('optimize', basename, _src, args);
 
     let _proc = spawn(pathToFfmpeg, args);
 
     _proc.stdout.on('data', function (data) {
-        console.log(data);
+        console.info(data);
     });
 
     _proc.stderr.on('data', function (data) {
-        console.log(`err`, data);
+        console.error(`err`, data);
     });
 
     _proc.stderr.setEncoding("utf8")
 
     _proc.on('close', function () {
-        console.log("DONES!");
+        console.info("DONES!");
     })
 }
 
 
-const optimizeMedia = (data) => {
+const optimizeMedia = async (data, powOfTwo = false) => {
     return new Promise((resolve) => {
         let type = data.type;
         let path = data.path;
         let dimensions = data.dimensions;
         let src = data.src;
         let format = data.format;
-        let transparency = data.transparency;
+
+        let newDim = powOfTwo ? getPowOfDim(dimensions, format) : getNewDim(dimensions, format);
 
         if (type === 'video') {
-            optimizeVideo(src, path, dimensions, format);
+            optimizeVideo({ src, path, newDim, format });
             resolve();
-        }
-        if (type === 'image') {
-            optimizeImage(src, path, dimensions, format, transparency)
-                .then(() => {
-                    resolve();
-                })
+        } else if (type === 'image') {
+            await optimizeImage({ src, path, newDim, format });
+            resolve();
         }
     })
 }
 module.exports = optimizeMedia;
-
-// export default optimizeMedia;

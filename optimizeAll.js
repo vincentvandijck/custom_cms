@@ -20,14 +20,14 @@ const optimizeVideo = async (path) => {
     ]
     let _proc = spawn(pathToFfmpeg, args);
     _proc.stdout.on('data', function (data) {
-        console.log(data);
+        console.info(data);
     });
     _proc.stderr.on('data', function (data) {
-        console.log(`err`, data);
+        console.error(`err`, data);
     });
     _proc.stderr.setEncoding("utf8")
     _proc.on('close', async () => {
-        console.log("CONVERTING DONE: ", path);
+        console.info("CONVERTING DONE: ", path);
         await fs.unlink(temp_path);
     })
 }
@@ -69,21 +69,17 @@ const optimizeMedia = ({ images, videos }) => {
     }
 
     const optimizeVideos = async () => {
-        console.log(videos);
         await videos.reduce(function (p, video) {
             return p.then(function (results) {
-                console.log(video);
                 return optimizeVideo(video);
             });
         }, Promise.resolve([]));
-        console.log('ok');
     }
     optimizeImages(images);
     optimizeVideos(videos);
 }
 
 let media = getAllMedia();
-console.log(media);
 optimizeMedia(media);
 
 
