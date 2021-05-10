@@ -5,7 +5,7 @@ const Server = require('./server/server.js');
 const { autoUpdater } = require("electron-updater");
 const log = require('electron-log');
 
-const { ipcMain } = require('electron')
+const { ipcMain, Menu } = require('electron');
 
 const app = electron.app;
 const protocol = electron.protocol
@@ -54,9 +54,9 @@ function initAutoUpdater() {
     })
     autoUpdater.on('update-downloaded', (info) => {
         _progress.sendStatusToWindow('download complete');
-        setTimeout(() => {
-            _progress.close();
-        }, 1500)
+        setImmediate(() => {
+            autoUpdater.quitAndInstall();
+        })
     });
 }
 
@@ -80,33 +80,32 @@ function Window({ width, height }) {
 
 function Program() {
     let _window = new Window({ width: 1200, height: 900 });
+    /* _window.setMenu(null);
+
+        const template = [
+            {
+                label: "Ftp Config",
+                submenu: [
+                    {
+                        label: 'Update',
+                        click: async () => {
+                            FtpConfigPrompt();
+                            _window.close();
+                        }
+                    }
+                ]
+            }
+        ];
+        Menu.setApplicationMenu(Menu.buildFromTemplate(template)); */
 
     fs.readFile(__dirname + '/server/ftp.config', 'utf8', function (err, data) {
         if (err) {
             return console.log(err);
         }
         data = JSON.parse(data);
-        console.log(data);
         _window.loadURL(data.path.url + "/cms");
-
-        _window.on('closed', function () {
-            _window = null;
-        });
-
-        _window.webContents.on('did-finish-load', () => {
-            // sendStatusToWindow('please');
-        })
     });
 
-    /* _window.loadURL('http://localhost:9002/');
-
-    _window.on('closed', function () {
-        _window = null;
-    });
-
-    _window.webContents.on('did-finish-load', () => {
-        // sendStatusToWindow('please');
-    }) */
 }
 
 function FtpConfigPrompt() {

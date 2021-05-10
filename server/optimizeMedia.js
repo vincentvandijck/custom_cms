@@ -19,8 +19,22 @@ const getPowOfDim = (dim, format) => {
     return { x: getPowOfTwo(dim.x, format), y: getPowOfTwo(dim.y, format) }
 }
 
+const getNewDim = (dim, format) => {
+    if (format === 'mobile') {
+        return {
+            x: dim.x > dim.y ? 854 : 480,
+            y: dim.x > dim.y ? 480 : 854,
+        }
+    } else {
+        return {
+            x: dim.x > dim.y ? 1920 : 1280,
+            y: dim.x > dim.y ? 1280 : 1920,
+        }
+    }
+}
+
 const optimizeImage = async (_src, _path, _dim, _format) => {
-    let newDim = getPowOfDim(_dim, _format);
+    let newDim = getNewDim(_dim, _format);
     let local_path = `${__dirname}/temp/${_format}/${_src}`;
     await sharp(_path).resize({ width: newDim.x, height: newDim.y, fit: sharp.fit.fill }).toFile(local_path);
     return delay(500);
@@ -29,10 +43,7 @@ const optimizeImage = async (_src, _path, _dim, _format) => {
 const optimizeVideo = (_src, _path, _dim, _format) => {
     console.log("OPTIMIIIIIZE");
     let basename = path.parse(_src).name;
-    let newDim = {
-        x: getPowOfTwo(_dim.x, _format),
-        y: getPowOfTwo(_dim.y, _format)
-    }
+    let newDim = getNewDim(_dim, _format);
 
     let dist_path = `${__dirname}/temp/${_format}/${_src}`;
     let progress_path = `${__dirname}/progress/${basename}.txt`;
@@ -57,7 +68,6 @@ const optimizeVideo = (_src, _path, _dim, _format) => {
     _proc.stderr.on('data', function (data) {
         console.log(`err`, data);
     });
-
 
     _proc.stderr.setEncoding("utf8")
 

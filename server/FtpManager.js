@@ -30,11 +30,19 @@ function ftpManager() {
             await this.ftp.connect(config.login);
             console.log('test worked');
             this.config = config;
-            this.ftp.end();
+            try {
+                this.ftp.end();
+            } catch (err) {
+                console.error(err);
+            }
             return true;
-        } catch (e) {
-            console.error(e);
-            this.ftp.end()
+        } catch (err) {
+            console.error(err);
+            try {
+                this.ftp.end();
+            } catch (err) {
+                console.error(err);
+            }
             return false;
         }
     }
@@ -86,7 +94,11 @@ function ftpManager() {
         // console.log(a.action.type, a.action.remote);
         try {
             await this.processAction(a.action);
-            this.ftp.end();
+            try {
+                this.ftp.end();
+            } catch (err) {
+                console.error(err);
+            }
         } catch (e) {
             console.log("ERRR", e);
         }
