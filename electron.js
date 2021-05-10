@@ -76,7 +76,7 @@ function Window({ width, height }) {
 
 function Program() {
     let _window = new Window({ width: 1200, height: 900 });
-    _window.setMenu(null);
+    // _window.setMenu(null);
 
     const template = [
         {
@@ -153,6 +153,12 @@ async function init() {
             const pathname = decodeURI(request.url.replace('file:///', ''));
             callback(pathname);
         });
+
+        protocol.registerFileProtocol('safe', (request, callback) => {
+            const pathname = decodeURIComponent(request.url.replace('safe://', ''));
+            callback(pathname);
+        });
+
         Program();
     }
 }

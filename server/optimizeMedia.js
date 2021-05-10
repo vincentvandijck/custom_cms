@@ -72,8 +72,8 @@ const optimizeVideo = ({ src, path, newDim, format }) => {
 }
 
 
-const optimizeMedia = async (data, powOfTwo = false) => {
-    return new Promise((resolve) => {
+const optimizeMedia = (data, powOfTwo = false) => {
+    return new Promise(async (resolve) => {
         let type = data.type;
         let path = data.path;
         let dimensions = data.dimensions;
