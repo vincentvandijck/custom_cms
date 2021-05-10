@@ -1,0 +1,57 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloading update</title>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        .fill {
+            width: 100%;
+            height: 100%;
+        }
+
+        .centered {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            position: absolute;
+            z-index: 1;
+            color: grey;
+            font-family: arial;
+        }
+
+        .background {
+            width: 0%;
+            height: 100%;
+            position: absolute;
+            z-index: 0;
+            background: black;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class='fill'>
+
+        <span class='centered'>downloading update</span>
+        <div class='background'></div>
+    </div>
+
+</body>
+<script>
+
+    require('electron').ipcRenderer.on('progress', (event, message) => {
+        console.log(message) // Prints 'whoooooooh!'
+        document.querySelector('.background').style.width = `${message}%`;
+    });
+
+</script>
+
+</html>
