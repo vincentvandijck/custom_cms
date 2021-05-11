@@ -12,6 +12,8 @@
     "pack": "electron-packager . --overwrite post-neon-cms --icon=favicon.ico",
     "publish": "electron-builder --win -p always"
   },
+      "target": "dmg",
+      "extraResources": {
   "publish": [
     {
       "provider": "github",
