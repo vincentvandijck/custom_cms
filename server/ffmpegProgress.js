@@ -1,11 +1,12 @@
 
 let fsp = require('fs').promises;
-
 let path = require('path');
+
+let localStoragePath = require('electron').app.getPath('userData') + '/Local Storage';
 
 const ffmpegProgress = async (src) => {
     let basename = path.parse(src).name;
-    let progress_path = `${__dirname}/progress/${basename}.txt`;
+    let progress_path = `${localStoragePath}/progress/${basename}.txt`;
     let content = await fsp.readFile(progress_path, 'utf8');
     if (!content) return;
     var progresses = content.match(/progress=(.*?)\n/g);

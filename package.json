@@ -1,8 +1,8 @@
 {
-  "name": "post-neon-cms",
-  "version": "1.0.2",
+  "name": "contentement",
+  "version": "1.0.13",
   "private": false,
-  "description": "custom cms for post-neon.com",
+  "description": "cms-app with media resizing functionalities",
   "main": "electron.js",
   "scripts": {
     "start": "electron .",
@@ -12,24 +12,39 @@
     "pack": "electron-packager . --overwrite post-neon-cms --icon=favicon.ico",
     "publish": "electron-builder --win -p always"
   },
+  "build": {
+    "files": "!node_modules/ffmpeg-static/**/*",
+    "mac": {
       "target": "dmg",
       "extraResources": {
+        "from": "node_modules/ffmpeg-static"
+      }
+    },
+    "win": {
+      "target": "nsis",
+      "extraResources": {
+        "from": "node_modules/ffmpeg-static"
+      }
+    }
+  },
   "publish": [
     {
       "provider": "github",
       "owner": "vincentvandijck",
-      "repo": "https://github.com/vincentvandijck/custom-cms.git"
+      "repo": "https://github.com/vincentvandijck/contentement.git"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vincentvandijck/custom-cms.git"
+    "url": "https://github.com/vincentvandijck/contentement.git"
   },
   "keywords": [
-    "post",
-    "neon",
-    "custom",
-    "cms"
+    "cms",
+    "ffmpeg",
+    "content",
+    "manager",
+    "system",
+    "ftp"
   ],
   "author": "GitHub",
   "license": "CC0-1.0",
@@ -55,10 +70,12 @@
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "dotenv": "8.2.0",
+    "electron-debug": "^3.2.0",
     "electron-is-dev": "^1.2.0",
     "electron-is-packaged": "^1.0.2",
-    "electron-log": "^4.3.2",
+    "electron-log": "^4.3.5",
     "electron-packager": "^15.2.0",
+    "electron-storage": "^1.0.7",
     "electron-updater": "^4.3.8",
     "express": "4.17.1",
     "ffmpeg-static": "^4.2.7",
@@ -75,7 +92,8 @@
     "uniqid": "^5.2.0",
     "update-electron-app": "^2.0.1",
     "url": "^0.11.0",
-    "web-vitals": "^0.2.4"
+    "web-vitals": "^0.2.4",
+    "xmlhttprequest": "^1.8.0"
   },
   "babel": {
     "presets": [

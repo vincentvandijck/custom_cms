@@ -1,13 +1,16 @@
 const electron = require('electron');
 const fs = require('fs')
 const process = require('process');
+const debug = require('electron-debug');
 
-const isDev = require('electron-is-dev');
+const { isPackaged } = require('electron-is-packaged');
 
 
 const Server = require('./server/server.js');
 const { autoUpdater } = require("electron-updater");
 const log = require('electron-log');
+const userDataPath = electron.app.getPath('userData');
+
 
 const { ipcMain, Menu, app, protocol, BrowserWindow } = require('electron');
 
@@ -16,9 +19,6 @@ let server = new Server();
 const path = require('path');
 
 log.info('App starting...');
-
-
-
 
 
 function initAutoUpdater() {
@@ -80,24 +80,28 @@ function Program() {
 
     const template = [
         {
-            label: "Ftp Config",
-            submenu: [
-                {
-                    label: 'Update',
-                    click: async () => {
-                        FtpConfigPrompt();
-                        _window.close();
-                    }
-                }
-            ]
+            label: "Update Ftp Config",
+            click: () => {
+                FtpConfigPrompt();
+                _window.close();
+            }
+        },
+        {
+            label: 'Debug',
+            click: () => {
+                _window.webContents.openDevTools()
+            }
         }
     ];
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-
-    fs.readFile(__dirname + '/server/ftp.config', 'utf8', function (err, data) {
+    log.info('open ', userDataPath + '/server/ftp.config');
+    fs.readFile(`${userDataPath}/Local Storage/ftp.config`, 'utf8', function (err, data) {
         if (err) {
-            return console.error(err);
+            console.error(err);
+            log.error(err);
+            return;
         }
+        log.info(data);
         data = JSON.parse(data);
         _window.loadURL(data.path.url + "/cms");
     });
@@ -105,6 +109,8 @@ function Program() {
 
 function FtpConfigPrompt() {
     let _window = new Window({ width: 600, height: 310 });
+    console.log(`file://${__dirname}/ftp_config.html`);
+
     _window.loadURL(`file://${__dirname}/ftp_config.html`);
     _window.setMenu(null);
     _window.setResizable(false)
@@ -121,32 +127,33 @@ function FtpConfigPrompt() {
         console.log('config: ', config);
         _window.webContents.send('existing-config', config);
         _window.webContents.send('ping', 'whoooooooh!')
-
     })
 }
 
 
 function Progress() {
-    let _window = new Window({ width: 1200, height: 300 });
+    let _window = new Window({ width: 400, height: 100 });
     _window.setMenu(null);
     _window.loadURL(`file://${__dirname}/progress.html`);
-    _window.webContents.on('did-finish-load', () => {
-        sendStatusToWindow(100, 'progress');
-    })
+    /* _window.webContents.on('did-finish-load', () => {
+        this.sendStatusToWindow(100, 'progress');
+    }) */
 
     this.sendStatusToWindow = (text, type = 'message') => {
-        log.info(text);
+        log.info('sendStatusToWindow', text);
         _window.webContents.send(type, text);
     }
 }
 
 async function init() {
     // check autoupdater
-    if (!isDev) {
+    if (isPackaged) {
         await initAutoUpdater();
     }
 
-    if (!fs.existsSync(__dirname + "/server/ftp.config")) {
+    console.log(userDataPath, __dirname);
+
+    if (!fs.existsSync(`${userDataPath}/Local Storage/ftp.config`)) {
         FtpConfigPrompt();
     } else {
         protocol.registerFileProtocol('file', (request, callback) => {

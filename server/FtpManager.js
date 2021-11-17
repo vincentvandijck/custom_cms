@@ -1,18 +1,24 @@
 let Client = require('ssh2-sftp-client');
-let fsp = require('fs').promises;
+let fs = require('fs');
+let fsp = fs.promises;
 
 let _path = require('path');
+const log = require('electron-log');
+let userDataPath = require('electron').app.getPath('userData');
+let localStoragePath = userDataPath + '/Local Storage'
+
 
 
 function ftpManager() {
     this.queue = [];
     this.ftp = new Client();
-
     this.connected = false;
+    this.processing = false;
 
     this.getFtpConfig = async () => {
         try {
-            const ftp_config = await fsp.readFile(`server/ftp.config`, "utf8");
+            const ftp_config = await fsp.readFile(`${userDataPath}/Local Storage/ftp.config`, "utf8");
+            console.log("CONFIG IS ", ftp_config);
             this.config = JSON.parse(ftp_config);
             return this.config;
         } catch (err) {
@@ -22,16 +28,21 @@ function ftpManager() {
     }
 
     this.testFtpConfig = async (config) => {
-        try {
-            await this.ftp.connect(config.login);
-            this.config = config;
-            this.ftp.end();
+        return new Promise((resolve) => {
+            log.info('testFTPConfig', config);
 
-            return true;
-        } catch (err) {
-            console.error(err);
-            return false;
-        }
+            this.ftp.connect(config.login).then(() => {
+                log.info('could connect to ftp');
+                this.config = config;
+                this.ftp.end();
+                resolve(true);
+            }).catch(err => {
+                log.error(err, 'catch error');
+                console.error(err);
+                resolve(false);
+            });
+        })
+
     }
 
     this.processAction = async (action) => {
@@ -61,8 +72,8 @@ function ftpManager() {
     this.progressUpload = (basename, progress, filesize, format) => {
         let percent = Math.round(progress / filesize * 100 * 100) / 100;
         let data = { percent: percent, format: format };
-        // let progress_path = `${__dirname}/progress/${basename}_upload.txt`;
-        let progress_path = _path.join(__dirname, 'progress', `${basename}_upload.txt`);
+        console.log('progressUpload', data);
+        let progress_path = _path.join(localStoragePath, 'progress', `${basename}_upload.txt`);
 
         fsp.writeFile(progress_path, JSON.stringify(data))
             .then(() => { })
@@ -70,14 +81,23 @@ function ftpManager() {
     }
 
     this.processQueue = async () => {
+        console.log('processAction', this.queue);
+
         let a = this.queue.shift();
+
+        this.processing = true;
 
         try {
             await this.ftp.connect(this.config.login);
             await this.processAction(a.action);
+            console.log('processQueueu', a, ' is finished');
             this.ftp.end();
         }
-        catch (err) { console.error(err) };
+        catch (err) {
+            console.error(err)
+        };
+        this.processing = false;
+
         a.resolve();
 
         if (this.queue.length !== 0)
@@ -86,7 +106,8 @@ function ftpManager() {
     this.addToQueue = (action) => {
         return new Promise((resolve) => {
             this.queue.push({ action: action, resolve: resolve });
-            this.processQueue();
+            if (!this.processing)
+                this.processQueue();
         })
 
     }

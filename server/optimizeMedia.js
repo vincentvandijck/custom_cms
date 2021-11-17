@@ -1,8 +1,20 @@
 let { spawn } = require('child_process');
-let pathToFfmpeg = require('ffmpeg-static');
+// let pathToFfmpeg = require('ffmpeg-static');
 let sharp = require('sharp');
-let path = require('path');
-let join = path.join;
+let _path = require('path');
+let join = _path.join;
+
+let userDataPath = require('electron').app.getPath('userData');
+let localStoragePath = userDataPath + '/Local Storage'
+
+var pathToFfmpeg = ''
+if (!__dirname.includes('.asar')) { // If dev
+    pathToFfmpeg = require('ffmpeg-static')
+} else { // if compiled
+    let ext = ''
+    if (process.platform === 'win32') ext = '.exe' // if windows
+    pathToFfmpeg = _path.join(process.resourcesPath + '/ffmpeg' + ext)
+}
 
 
 const delay = time => new Promise(res => setTimeout(res, time));
@@ -34,15 +46,16 @@ const getNewDim = (dim, format) => {
 }
 
 const optimizeImage = async ({ src, path, newDim, format }) => {
-    let local_path = `${__dirname}/temp/${format}/${src}`;
+    let local_path = `${localStoragePath}/temp/${format}/${src}`;
     await sharp(path).resize({ width: newDim.x, height: newDim.y, fit: sharp.fit.fill }).toFile(local_path);
     return delay(500);
 }
 
 const optimizeVideo = ({ src, path, newDim, format }) => {
-    let basename = path.parse(src).name;
-    let local_path = `${__dirname}/temp/${format}/${src}`;
-    let progress_path = `${__dirname}/progress/${basename}.txt`;
+    console.log('optimizeVideo: ', src, path);
+    let basename = _path.parse(src).name;
+    let local_path = `${localStoragePath}/temp/${format}/${src}`;
+    let progress_path = `${localStoragePath}/progress/${basename}.txt`;
 
     const args = [
         '-i', path,
